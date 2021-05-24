@@ -2,8 +2,8 @@ import os
 import numpy as np
 import torch 
 import torch.optim as optim
-from PPO.model import Actor,Critic
-from PPO.memory import PPOMemory
+from model import Actor,Critic
+from memory import PPOMemory
 class PPO:
     def __init__(self, state_dim, action_dim, cfg):
         self.env = cfg.env
