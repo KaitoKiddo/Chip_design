@@ -7,9 +7,7 @@ import numpy as np
 import torch
 import datetime
 sys.path.append(r'E:\Model\EasyRl\codes')
-from PPO.agent import PPO
-from common.plot import plot_rewards
-from common.utils import save_results
+from agent import PPO
 
 
 SEQUENCE = datetime.datetime.now().strftime("%Y%m%d-%H%M%S") # 获取当前时间
@@ -27,7 +25,6 @@ if not os.path.exists(RESULT_PATH): # 检测是否存在文件夹
 class PPOConfig:
     def __init__(self) -> None:
         self.env = Env
-        self.algo = 'PPO'
         self.batch_size = 5
         self.gamma = 0.99
         self.n_epochs = 4
@@ -40,12 +37,12 @@ class PPOConfig:
         self.train_eps = 300  # max training episodes
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # check gpu
         
-def play(cfg,env,agent):
-    best_reward = env.reward_range[0]
+def play(cfg, env, agent):
+    
     rewards= []
-    ma_rewards = []  # moving average rewards
-    avg_reward = 0
+    
     running_steps = 0
+    
     for i_episode in range(cfg.train_eps):
         state = env.reset()
         done = False
@@ -86,5 +83,3 @@ if __name__ == '__main__':
     print(action_dim)
     agent = PPO(state_dim, action_dim, cfg)
     rewards, ma_rewards = play(cfg, env, agent)
-    save_results(rewards, ma_rewards, tag='train', path=RESULT_PATH)
-    plot_rewards(rewards, ma_rewards, tag="train", algo=cfg.algo, path=RESULT_PATH)
