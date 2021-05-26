@@ -52,10 +52,14 @@ def play(cfg, env, agent):
 
         while not done:
             observation = state
+            print('start……')
             action, prob, val = agent.choose_action(observation)
-            state_, reward, done = env.step(action)
+            state_, reward, same, done = env.step(action)
+            #if same:
+            #    continue
             # print(state_, reward, action)
             running_steps += 1
+            print(running_steps)
             ep_reward = reward
             agent.memory.push(observation, action, prob, val, 0, done)
             if running_steps % cfg.update_fre == 0:
@@ -121,7 +125,7 @@ def output(action_space, mother_port, daughter_port, HB_location):
                 y = 200.07 - HB_location[j][1]
                 daughter_file.write(x + ' ')
                 daughter_file.write(y + ' ')
-        daughter_file.write(daughter_file[i])
+        daughter_file.write(daughter_port[i])
         daughter_file.write('\n')
 
     daughter_file.close()

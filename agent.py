@@ -20,7 +20,7 @@ class PPO:
         self.loss = 0
 
     def choose_action(self, state):
-        state = torch.tensor(state, dtype=torch.float64).to(self.device)
+        state = torch.tensor(state, dtype=torch.float).to(self.device)
         dist = self.actor(state)
         value = self.critic(state)
         action = dist.sample()
@@ -36,7 +36,7 @@ class PPO:
                     self.memory.sample()
             values = vals_arr
             ### compute advantage ###
-            advantage = np.zeros(len(reward_arr), dtype=np.float64)
+            advantage = np.zeros(len(reward_arr), dtype=np.float)
             for t in range(len(reward_arr)-1):
                 discount = 1
                 a_t = 0
@@ -49,7 +49,7 @@ class PPO:
             ### SGD ###
             values = torch.tensor(values).to(self.device)
             for batch in batches:
-                states = torch.tensor(state_arr[batch], dtype=torch.float64).to(self.device)
+                states = torch.tensor(state_arr[batch], dtype=torch.float).to(self.device)
                 old_probs = torch.tensor(old_prob_arr[batch]).to(self.device)
                 actions = torch.tensor(action_arr[batch]).to(self.device)
                 dist = self.actor(states)
