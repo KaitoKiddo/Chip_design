@@ -82,8 +82,7 @@ def play(cfg, env, agent):
             agent.save(path=SAVED_MODEL_PATH)
         print('Episode:{}/{}, Reward:{:.1f}, avg reward:{:.1f}, Done:{}'.format(i_episode+1,cfg.train_eps,ep_reward,avg_reward,done))
 
-        action_space = env.get_action_space()
-    return rewards, ma_rewards, action_space
+    return rewards, ma_rewards
 
 def update_reward(memory, reward_index, reward):
     if reward_index == 580:
@@ -92,6 +91,42 @@ def update_reward(memory, reward_index, reward):
     else:
         for i in range(581, reward_index+1):
             memory.rewards[i] = reward
+
+def output(action_space, mother_port, daughter_port, HB_location):
+
+    mother_file = open('mother_die_HB_location', 'w')
+
+    mother_file.write('Chip_Name: mother_die\nDieBox: 0.000000 0.000000 200.000000 200.070000\n')
+    for i in range(581):
+        mother_file.write('Bump: Bump_' + str(i) + ' FRONT_HB ')
+        for j in range(625):
+            if action_space[j] == i:
+                x = HB_location[j][0]
+                y = HB_location[j][1]
+                mother_file.write(x + ' ')
+                mother_file.write(y + ' ')
+        mother_file.write(mother_port[i])
+        mother_file.write('\n')
+
+    mother_file.close()
+
+    daughter_file = open('mother_die_HB_location', 'w')
+
+    daughter_file.write('Chip_Name: daughter_die\nDieBox: 0.000000 0.000000 200.000000 200.070000\n')
+    for i in range(581):
+        daughter_file.write('Bump: Bump_' + str(i) +' FRONT_HB ')
+        for j in range(625):
+            if action_space[j] == i:
+                x = HB_location[j][0]
+                y = 200.07 - HB_location[j][1]
+                daughter_file.write(x + ' ')
+                daughter_file.write(y + ' ')
+        daughter_file.write(daughter_file[i])
+        daughter_file.write('\n')
+
+    daughter_file.close()
+
+    return mother_file, daughter_file
 
 if __name__ == '__main__':
 
@@ -107,5 +142,16 @@ if __name__ == '__main__':
     print(action_dim)
 
     agent = PPO(state_dim, action_dim, cfg)
-    rewards, ma_rewards, action_space = play(cfg, env, agent)
+    rewards, ma_rewards = play(cfg, env, agent)
     print(rewards)
+
+    # 输出处理
+    action_space = env.get_action_space()
+    mother_port = []
+    for i in range(env.port_set_list):
+        mother_port.append(i.mother_port)
+    daughter_port = []
+    for i in range(env.port_set_list):
+        daughter_port.append(i.daughter_port)
+    HB_location = env.HB_upper_left_points
+    mother_file, daughter_file = output(action_space, mother_port, daughter_port, HB_location)
