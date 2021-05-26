@@ -2,11 +2,10 @@ import sys,os
 curr_path = os.path.dirname(__file__)
 parent_path=os.path.dirname(curr_path) 
 sys.path.append(parent_path) # add current terminal path to sys.path
-from env import Env
+import env
 import numpy as np
 import torch
 import datetime
-sys.path.append(r'E:\Model\EasyRl\codes')
 from agent import PPO
 
 
@@ -24,17 +23,17 @@ if not os.path.exists(RESULT_PATH): # 检测是否存在文件夹
 
 class PPOConfig:
     def __init__(self) -> None:
-        self.env = Env
-        self.batch_size = 5
+        self.env = env.Env()
+        self.batch_size = 64
         self.gamma = 0.99
         self.n_epochs = 4
         self.actor_lr = 0.0003
         self.critic_lr = 0.0003
         self.gae_lambda = 0.95
         self.policy_clip = 0.2
-        self.hidden_dim = 256
-        self.update_fre = 20  # frequency of agent update
-        self.train_eps = 300  # max training episodes
+        self.hidden_dim = 1024
+        self.update_fre = 1162  # frequency of agent update
+        self.train_eps = 2000  # max training episodes
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # check gpu
         
 def play(cfg, env, agent):
@@ -47,39 +46,66 @@ def play(cfg, env, agent):
         state = env.reset()
         done = False
         ep_reward = 0
+        best_reward = 0
+        reward_index = 0
+        ma_rewards = []
 
         while not done:
-            action, prob, val = agent.choose_action(state)
-            state_, reward, done, _ = env.step(action)
-            print(state_, reward, action)
+            observation = state
+            action, prob, val = agent.choose_action(observation)
+            state_, reward, done = env.step(action)
+            # print(state_, reward, action)
             running_steps += 1
-            ep_reward += reward
-            agent.memory.push(state, action, prob, val, reward, done)   # 调整到一个episode再Push一次，并全覆盖
+            ep_reward = reward
+            agent.memory.push(observation, action, prob, val, 0, done)
             if running_steps % cfg.update_fre == 0:
                 agent.update()
             state = state_
+            reward_index = (running_steps-1) % cfg.update_fre
+        
+        # 更新前面的reward，往前取581个
+        update_reward(agent.memory, reward_index, ep_reward)
+        
         rewards.append(ep_reward)
+
+        # 统计时使用的reward数据
         if ma_rewards:
             ma_rewards.append(
                 0.9*ma_rewards[-1]+0.1*ep_reward)
         else:
             ma_rewards.append(ep_reward)
+
         avg_reward = np.mean(rewards[-100:])
+
         if avg_reward > best_reward:
             best_reward = avg_reward
             agent.save(path=SAVED_MODEL_PATH)
         print('Episode:{}/{}, Reward:{:.1f}, avg reward:{:.1f}, Done:{}'.format(i_episode+1,cfg.train_eps,ep_reward,avg_reward,done))
-    return rewards, ma_rewards
+
+        action_space = env.get_action_space()
+    return rewards, ma_rewards, action_space
+
+def update_reward(memory, reward_index, reward):
+    if reward_index == 580:
+        for i in range(reward_index+1):
+            memory.rewards[i] = reward
+    else:
+        for i in range(581, reward_index+1):
+            memory.rewards[i] = reward
 
 if __name__ == '__main__':
+
     cfg = PPOConfig()
     env = cfg.env
-
-    # 需要预处理
-    state_dim = env.observation_space.shape[0]
+    
+    # state预处理得到observation的dim传到PPO中
+    state = env.reset()
+    state_dim = len(state)
     print(state_dim)
 
-    action_dim = len(env.get_action_space)
+    action_dim = len(env.get_action_space())
     print(action_dim)
+
     agent = PPO(state_dim, action_dim, cfg)
-    rewards, ma_rewards = play(cfg, env, agent)
+    rewards, ma_rewards, action_space = play(cfg, env, agent)
+    print(rewards)
