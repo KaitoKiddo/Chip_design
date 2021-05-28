@@ -52,14 +52,14 @@ def play(cfg, env, agent):
 
         while not done:
             observation = state
-            print('start……')
+            # print('start……')
             action, prob, val = agent.choose_action(observation)
             state_, reward, same, done = env.step(action)
-            #if same:
-            #    continue
+            if same:
+                continue
             # print(state_, reward, action)
             running_steps += 1
-            print(running_steps)
+            # print(running_steps)
             ep_reward = reward
             agent.memory.push(observation, action, prob, val, 0, done)
             if running_steps % cfg.update_fre == 0:
