@@ -24,16 +24,16 @@ if not os.path.exists(RESULT_PATH): # 检测是否存在文件夹
 class PPOConfig:
     def __init__(self) -> None:
         self.env = env.Env()
-        self.batch_size = 64
+        self.batch_size = 16
         self.gamma = 0.99
         self.n_epochs = 4
         self.actor_lr = 0.0003
         self.critic_lr = 0.0003
         self.gae_lambda = 0.95
         self.policy_clip = 0.2
-        self.hidden_dim = 1024
+        self.hidden_dim = 2048
         self.update_fre = 1162  # frequency of agent update
-        self.train_eps = 2000  # max training episodes
+        self.train_eps = 200  # max training episodes
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # check gpu
         
 def play(cfg, env, agent):
@@ -63,13 +63,12 @@ def play(cfg, env, agent):
             ep_reward = reward
             agent.memory.push(observation, action, prob, val, 0, done)
             if running_steps % cfg.update_fre == 0:
+                # 更新前面的reward，往前取581个
+                update_reward(agent.memory, reward_index, ep_reward)
                 agent.update()
             state = state_
             reward_index = (running_steps-1) % cfg.update_fre
-        
-        # 更新前面的reward，往前取581个
-        update_reward(agent.memory, reward_index, ep_reward)
-        
+                
         rewards.append(ep_reward)
 
         # 统计时使用的reward数据

@@ -9,8 +9,14 @@ class Actor(nn.Module):
                 nn.ReLU(),
                 nn.Linear(hidden_dim, hidden_dim),
                 nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
                 nn.Linear(hidden_dim, action_dim),
-                nn.Softmax(dim=-1)
+                nn.Softmax(dim=0)
         )
     def forward(self, state):
         dist = self.actor(state)
