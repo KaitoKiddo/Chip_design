@@ -1,14 +1,3 @@
-#!/usr/bin/env python
-# coding=utf-8
-'''
-Author: John
-Email: johnjim0816@gmail.com
-Date: 2021-03-23 15:30:46
-LastEditor: John
-LastEditTime: 2021-03-23 15:30:55
-Discription: 
-Environment: 
-'''
 import numpy as np
 class PPOMemory:
     def __init__(self, batch_size):
