@@ -233,18 +233,16 @@ class Env():
             self.state_ = self.state
 
             if self.count == len(self.port_set_list):
-                if -self.total_reward < self.lowest_reward:
-                    self.lowest_reward = -self.total_reward
+
                 self.total_reward_list.append(self.total_reward)
                 done = True
-                if self.count_581 == 0:
-                    self.reward= 1
+                if -self.total_reward<self.lowest_reward:
+                    self.reward = 1
+                    self.lowest_reward = -self.total_reward
                 else:
-                    if -self.total_reward<self.lowest_reward:
-                        self.reward = 1
-                    else:
-                        self.reward = 0
+                    self.reward = 0
 
+                    
                 self.count_581 = self.count_581+1
         return self.state_, self.reward,done
 
