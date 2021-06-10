@@ -1,6 +1,143 @@
 import numpy as np
 import pandas as pd
 import math
+import copy
+class Data:
+    def __init__(self, data=None):
+        self.data = data
+        self.next = None
+
+
+class LinkedListTail:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+
+    def add_head(self, data):
+        new_node = Data(data)
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+            return 'New value added'
+        new_node.next = self.head
+        self.head = new_node
+        return 'New value added'
+
+    def add_tail(self, data):
+        new_node = Data(data)
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+            return 'New value added'
+        self.tail.next = new_node
+        self.tail = new_node
+        return 'New value added'
+
+    def remove_head(self):
+        if self.head is None:
+            return 'No value to remove'
+        gone = self.head
+        self.head = self.head.next
+        return gone.data, 'removed'
+
+    def remove_tail(self):
+        if self.head is None:
+            return 'No value to remove'
+        gone = self.head
+        previous = self.head
+        while gone.next is not None:
+            previous = gone
+            gone = gone.next
+        previous.next = None
+        self.tail = previous
+        return gone.data, 'removed'
+
+    def remove(self, remove):
+        if self.head is None:
+            return 'No value to remove'
+        if self.head.data == remove:
+            self.head = self.head.next
+            return remove, 'removed'
+        gone = self.head
+        previous = self.head
+        while gone.next is not None or gone.data == remove:
+            if gone.data == remove and gone.next is None:
+                self.tail = previous
+                previous.next = None
+                return gone.data, 'removed'
+            if gone.data == remove:
+                previous.next = previous.next.next
+                return remove, 'removed'
+            previous = gone
+            gone = gone.next
+        return 'No value to remove'
+
+    def search(self, seek):
+        if self.head.data == seek:
+            return True, f'{seek} is included'
+        current = self.head
+        while current.next is not None:
+            if current.data == seek:
+                return True, f'{seek} is included'
+            current = current.next
+        if current.data == seek:
+            return True, f'{seek} is included'
+        return False, f'{seek} not included'
+    def get_i(self,i):
+        current = self.head
+        for k in range(0,i-1):
+             current = current.next
+        return current.data
+    def seek(self, search):
+        elements = self.display()
+        for element in elements:
+            if search == element:
+                return True, f'{search} is included'
+        return False, f'{search} not included'
+        
+    def display(self):
+        elements = []
+        current = self.head
+        while current is not None:
+            elements.append(current.data)
+            current = current.next
+        return elements
+
+    def show_ht(self):
+        return f'The beginning of the List is {self.head.data} and the end is {self.tail.data}'
+
+    def clear_all(self):
+        self.head = None
+        self.tail = None
+        return 'All values removed'
+    def insert(self,data,i):
+        current = self.head
+        for k in range(0,i-1):
+            current = current.next
+        new_node = Data(data)
+
+        new_node.next = current.next
+        current.next = new_node
+        self.remove_tail()
+        if i == 9:
+            self.tail = new_node
+
+        return 'New value added'
+class Queue:
+    def __init__(self):
+        self.queue = LinkedListTail()
+
+    def push(self, data):
+        return self.queue.add_tail(data)
+
+    def pop(self):
+        return self.queue.remove_head()
+
+    def peak_head(self):
+        return self.queue.head.data
+    def peak_tail(self):
+        return self.queue.tail.data
+
 class Port_set:
     def __init__(self,mother_port,mother_die_set, daughter_port,daughter_die_set):
         self.mother_port = mother_port
@@ -10,6 +147,7 @@ class Port_set:
 class Env():
     
     def __init__(self):
+
         self.total_reward_list=[]
         self.lowest_reward = 999999
         self.count_581 = 0
@@ -20,6 +158,7 @@ class Env():
         self.action_space = np.zeros(625)
         self.count = 0      # 计数，每调用一次setp（） +1
         self.total_reward = 0       # 累计reward
+        
         top_connect = pd.read_csv('top_conn' ,header=None, delimiter=r"\s+")
         mother_die = pd.read_csv('mother_die.port_conn.xy' ,header=None, delimiter=r"\s+")
         daughter_die = pd.read_csv('daughter_die.port_conn.xy' ,header=None, delimiter=r"\s+")
@@ -49,18 +188,19 @@ class Env():
             if daughter_die_set.shape[0] != 1: 
                 daughter_die_set =np.delete(daughter_die_set, 0, 0) 
             port_set1 = Port_set(top_connect[i,0],mother_die_set,top_connect[i,1],daughter_die_set)
-            self.port_set_list.append(port_set1)
-        self.state =[]
-        
-        for i in range(0,10):
-            action_position = np.zeros([25,25])
-            self.state.append(action_position)
+            self.port_set_list.append(port_set1) 
+
+            
         for m in range(0,625):      # 计算HB坐标
             self.HB_centre_points[m,0] = 4*(2*(m%25)+1)
             self.HB_centre_points[m,1] = 4*(2*math.floor(m/25)+1)
             self.HB_upper_left_points[m,0] = self.HB_centre_points[m,0]-1
             self.HB_upper_left_points[m,1] = self.HB_centre_points[m,1]+1
-        
+        self.queue = Queue()
+        for i in range(0,10):
+            action_position = np.zeros([25,25])
+            self.queue.push(action_position)
+        self.state =  self.queue.queue.display()
             
     def step(self,action):
         done = False
@@ -71,28 +211,24 @@ class Env():
             self.reward = 0
             x=math.floor(action/25)
             y=action%25
+            
             if self.count == 0:
                 action_position = np.zeros([25,25])
                 action_position[x,y] = 1
-                self.state[self.count] = action_position
+                self.queue.queue.add_head(action_position)
+                self.queue.queue.remove_tail()
+                self.state = self.queue.queue.display()
             elif self.count < 10:
-                action_position = np.zeros([25,25])
-                for i in range(0,25):
-                    for j in range(0,25):
-                        action_position[i,j] = self.state[self.count-1][i,j]
+                action_position = copy.deepcopy(self.queue.queue.get_i(self.count))
                 action_position[x,y] = 1 
-                self.state[self.count] = action_position
+                self.queue.queue.insert(action_position,self.count)
+                self.state = self.queue.queue.display()
             else:
-                action_position = np.zeros([25,25])
-                for k in range(0,9):
-                    for i in range(0,25):
-                        for j in range(0,25):                    
-                            self.state[k][i,j] = self.state[k+1][i,j]
-                for i in range(0,25):
-                    for j in range(0,25):
-                        action_position[i,j] = self.state[8][i,j]
+                action_position = copy.deepcopy(self.queue.peak_tail())
+                self.queue.pop()
                 action_position[x,y] = 1
-                self.state[9] = action_position
+                self.queue.push(action_position)
+                self.state = self.queue.queue.display()
             self.count = self.count + 1
             self.state_ = self.state
 
@@ -116,11 +252,11 @@ class Env():
         self.count = 0
         self.total_reward = 0
         self.reward = 0
-        self.action_space = np.zeros(625)
-        
+        self.queue.queue.clear_all()
         for i in range(0,10):
             action_position = np.zeros([25,25])
-            self.state[i]= action_position
+            self.queue.push(action_position)
+        self.state =  self.queue.queue.display()
         return self.state
         
     def get_total_reward(self):
