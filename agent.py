@@ -6,6 +6,7 @@ from torch.autograd import Variable
 from model import Actor,Critic, BasicBlock
 from memory import PPOMemory
 import random
+import datetime
 class PPO:
     def __init__(self, action_dim, cfg):
         self.env = cfg.env
@@ -22,17 +23,20 @@ class PPO:
         self.loss = 0
 
     def choose_action(self, state, mask):
-
+        # st = datetime.datetime.now()
         state = torch.tensor(state, dtype=torch.float)
         state = Variable(torch.unsqueeze(state, dim=0).float(), requires_grad=False).to(self.device)
+        # et = datetime.datetime.now()
         dist = self.actor(state)
         # print(dist.probs)
         value = self.critic(state)
-        while(1):
+        
+        # print(et-st)
+        while True:
             rand = random.random()
             if rand < 0.05:
                 action = random.randint(0, 624)
-                action = torch.tensor(action)
+                action = torch.tensor(action).to(self.device)
             else:
                 action = dist.sample()
             # print(action)
@@ -44,7 +48,7 @@ class PPO:
                 break
         value = torch.squeeze(value).item()
 
-        print(action)
+        # print(action)
         mask[action] = 1
         return action, probs, value
 
@@ -92,15 +96,15 @@ class PPO:
                 self.actor_optimizer.step()
                 self.critic_optimizer.step()
         self.memory.clear()  
-    def save(self,path):
-        actor_checkpoint = os.path.join(path, str(self.env)+'_actor.pt')
-        critic_checkpoint= os.path.join(path, str(self.env)+'_critic.pt')
-        torch.save(self.actor.state_dict(), actor_checkpoint)
-        torch.save(self.critic.state_dict(), critic_checkpoint)
-    def load(self,path):
-        actor_checkpoint = os.path.join(path, str(self.env)+'_actor.pt')
-        critic_checkpoint= os.path.join(path, str(self.env)+'_critic.pt')
-        self.actor.load_state_dict(torch.load(actor_checkpoint)) 
-        self.critic.load_state_dict(torch.load(critic_checkpoint))  
+    # def save(self,path):
+    #     actor_checkpoint = os.path.join(path, str(self.env)+'_actor.pt')
+    #     critic_checkpoint= os.path.join(path, str(self.env)+'_critic.pt')
+    #     torch.save(self.actor.state_dict(), actor_checkpoint)
+    #     torch.save(self.critic.state_dict(), critic_checkpoint)
+    # def load(self,path):
+    #     actor_checkpoint = os.path.join(path, str(self.env)+'_actor.pt')
+    #     critic_checkpoint= os.path.join(path, str(self.env)+'_critic.pt')
+    #     self.actor.load_state_dict(torch.load(actor_checkpoint))
+    #     self.critic.load_state_dict(torch.load(critic_checkpoint))
 
 
