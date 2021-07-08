@@ -30,14 +30,13 @@ class PPOConfig:
     def __init__(self):
         self.env = env.Env()
         self.algo = 'PPO'
-        self.batch_size = 256
+        self.batch_size = 64
         self.gamma = 0.99
-        self.n_epochs = 4
+        self.n_epochs = 10
         self.actor_lr = 0.001
         self.critic_lr = 0.001
         self.gae_lambda = 0.95
         self.policy_clip = 0.2
-        self.hidden_dim = 1024
         self.update_fre = 5810  # frequency of agent update
         self.train_eps = 20000  # max training episodes
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # check gpu
@@ -153,9 +152,9 @@ def output(action_space, mother_port, daughter_port, HB_location):
 
     mother_file.write('Chip_Name: mother_die\nDieBox: 0.000000 0.000000 200.000000 200.070000\n')
     for i in range(581):
-        mother_file.write('Bump: Bump_' + str(i) + ' FRONT_HB ')
+        mother_file.write('Bump: Bump_' + str(i+1) + ' FRONT_HB ')
         for j in range(625):
-            if action_space[j] == i:
+            if action_space[j] == i+1:
                 x = HB_location[j][0]
                 y = HB_location[j][1]
                 mother_file.write(str(x))
@@ -171,9 +170,9 @@ def output(action_space, mother_port, daughter_port, HB_location):
 
     daughter_file.write('Chip_Name: daughter_die\nDieBox: 0.000000 0.000000 200.000000 200.070000\n')
     for i in range(581):
-        daughter_file.write('Bump: Bump_' + str(i) +' FRONT_HB ')
+        daughter_file.write('Bump: Bump_' + str(i+1) +' FRONT_HB ')
         for j in range(625):
-            if action_space[j] == i:
+            if action_space[j] == i+1:
                 x = HB_location[j][0]
                 y = 200 - HB_location[j][1]
                 daughter_file.write(str(x))

@@ -242,17 +242,10 @@ class Env():
                 self.state = self.queue.queue.display()
             self.count = self.count + 1
             self.state_ = self.state
-
             if self.count == len(self.port_set_list):
                 self.total_reward_list.append(self.total_reward)
                 done = True
-                # if -self.total_reward<self.lowest_reward:
-                #     self.reward = 1
-                #     self.lowest_reward = -self.total_reward
-                # else:
-                #     self.reward = 0
                 self.reward = self.total_reward + 250000
-
                 self.count_581 = self.count_581 + 1
         return self.state_, self.reward, done, self.total_reward
 
@@ -266,9 +259,6 @@ class Env():
             self.queue.push(action_position)
         self.state = self.queue.queue.display()
         return self.state
-
-    def get_total_reward(self):
-        return self.total_reward
 
     def calculate_reward(self, action, count):  # 计算HB和对应端口集的reward
         reward = -self.total_reward
